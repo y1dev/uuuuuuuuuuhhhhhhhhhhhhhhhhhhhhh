@@ -1,14 +1,8 @@
 const http = require('http');
 http.createServer((req, res) => res.end('Bot is running!')).listen(process.env.PORT || 8080);
 require('dotenv').config();
-const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, ActivityType } = require('discord.js');
 
-const {
-    Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder,
-    PermissionFlagsBits, EmbedBuilder, ActivityType
-} = require('discord.js');
-const http = require('http');
-require('dotenv').config();
 
 // ─── Keep Alive ────────────────────────────────────────────────────────────
 http.createServer((req, res) => res.end('Bot is running!')).listen(process.env.PORT || 8080);
@@ -68,6 +62,21 @@ function hasMod(member) {
 function logAction(action, target, mod, reason = 'No reason provided') {
     modLogs.unshift({ action, target: target?.user?.tag || target, mod: mod?.user?.tag || mod, reason, date: new Date() });
     if (modLogs.length > 200) modLogs.pop();
+
+    // Send to bot-logs channel
+    const botLogsChannel = client.channels.cache.find(c => c.name.toLowerCase() === 'bot-logs');
+    if (botLogsChannel) {
+        const embed = new EmbedBuilder()
+            .setColor('#9b59b6')
+            .setTitle(`📋 ${action}`)
+            .addFields(
+                { name: 'Target', value: target?.user?.tag || target, inline: true },
+                { name: 'Moderator', value: mod?.user?.tag || mod, inline: true },
+                { name: 'Reason', value: reason }
+            )
+            .setTimestamp();
+        botLogsChannel.send({ embeds: [embed] }).catch(() => {});
+    }
 }
 
 function formatDuration(ms) {
